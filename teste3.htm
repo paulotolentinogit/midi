@@ -125,7 +125,9 @@
       var noteToPlay = Tone.Frequency(note.number, "midi").toNote();
 
       const osciladorIndex = osciladoresInput1.findIndex((oscilador) => {
-        return oscilador.frequency.value.toFixed(4) == Tone.Frequency(noteToPlay).toFrequency().toFixed(4);
+        var ociladorInside = Math.trunc(oscilador.frequency.value * 10000) / 10000;
+        var ociladorFilter = Math.trunc(Tone.Frequency(noteToPlay).toFrequency() * 10000) / 10000;
+        return ociladorInside == ociladorFilter;
       });
       var qtocilador = osciladoresInput1.length;
       if (osciladorIndex !== -1) {
