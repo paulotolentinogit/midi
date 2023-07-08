@@ -127,13 +127,15 @@
       const osciladorIndex = osciladoresInput1.findIndex((oscilador) => {
         return oscilador.frequency.value.toFixed(4) == Tone.Frequency(noteToPlay).toFrequency().toFixed(4);
       });
-
+      var qtocilador = osciladoresInput1.length;
       if (osciladorIndex !== -1) {
         const oscilador = osciladoresInput1[osciladorIndex];
         oscilador.stop();
         oscilador.disconnect();
         osciladoresInput1.splice(osciladorIndex, 1);
       }
+      log(`ociladores: ${qtocilador} agora: ${osciladoresInput1.length}`);
+
     }
 
 // Função para reproduzir a nota no sintetizador do instrumento 2
@@ -174,13 +176,14 @@ function playNote2(event) {
       const osciladorIndex = osciladoresInput1.findIndex((oscilador) => {
         return oscilador.frequency.value.toFixed(4) == Tone.Frequency(noteToPlay).toFrequency().toFixed(4);
       });
-
+      var qtocilador = osciladoresInput1.length;
       if (osciladorIndex !== -1) {
         const oscilador = osciladoresInput1[osciladorIndex];
         oscilador.stop();
         oscilador.disconnect();
         osciladoresInput1.splice(osciladorIndex, 1);
       }
+      log(`ociladores: ${qtocilador} agora: ${osciladoresInput1.length}`);
     }
 
     // Evento quando a escolha do teclado MIDI para o instrumento 1 é alterada
