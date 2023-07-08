@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Piano com seleção de teclado MIDI</title>
+</head>
+<body>
+
+  <h1>Escolha o teclado MIDI para o instrumento 1:</h1>
+  <select id="midi-inputs-1">
+    <option disabled selected>Selecione um teclado MIDI</option>
+  </select>
+  <br>
+  <h1>Escolha Tipo de oscilador 1:</h1>
+  <select id="osciladortype1">
+    <option value="triangle">Triangle</option>
+    <option value="sawtooth">Sawtooth</option>
+    <option value="square" selected>Square</option>
+    <option value="sine">Sine</option>
+  </select>
+
+  <h1>Escolha o teclado MIDI para o instrumento 2:</h1>
+  <select id="midi-inputs-2">
+    <option disabled selected>Selecione um teclado MIDI</option>
+  </select>
+  <br>
+  <h1>Escolha Tipo de oscilador 2:</h1>
+  <select id="osciladortype2">
+    <option value="triangle" >Triangle</option>
+    <option value="sawtooth" selected>Sawtooth</option>
+    <option value="square">Square</option>
+    <option value="sine">Sine</option>
+  </select>
+
+  <h1>Log execução</h1>
+  <textarea id="logtext" style="width: 638px; height: 150px;"></textarea>
+
+  <script src="https://unpkg.com/webmidi@2.5.0/webmidi.min.js"></script>
+  <script src="https://unpkg.com/tone/build/Tone.js"></script>
+  <script>
+    function log(texto){
+      document.getElementById('logtext').value = texto + "\n" + document.getElementById('logtext').value; 
+    }
+    var input1; // Variável para armazenar o teclado MIDI para o instrumento 1
+    var input2; // Variável para armazenar o teclado MIDI para o instrumento 2
+    var audioContext; // Objeto para o contexto de áudio
+
+    // Função para exibir os teclados MIDI disponíveis
+    function showMIDIInputs() {
+      var midiInputs = WebMidi.inputs;
+      var selectElement1 = document.getElementById('midi-inputs-1');
+      var selectElement2 = document.getElementById('midi-inputs-2');
+
+      midiInputs.forEach(function(input) {
+        var optionElement1 = document.createElement('option');
+        var optionElement2 = document.createElement('option');
+        optionElement1.value = input.name;
+        optionElement1.text = input.name;
+        optionElement2.value = input.name;
+        optionElement2.text = input.name;
+        selectElement1.appendChild(optionElement1);
+        selectElement2.appendChild(optionElement2);
+      });
+    }
+
+    // Função para configurar o teclado MIDI para o instrumento 1
+    function setupMIDIInput1() {
+      var selectElement = document.getElementById('midi-inputs-1');
+      var selectedInputName = selectElement.value;
+
+      if (selectedInputName) {
+        input1 = WebMidi.getInputByName(selectedInputName);
+
+        if (input1) {
+          console.log('Teclado MIDI para o instrumento 1 selecionado:', selectedInputName);
+          log('Teclado MIDI para o instrumento 1 selecionado:'+ selectedInputName);
+          input1.addListener('noteon', 'all', playNote1);
+          input1.addListener('noteoff', 'all', releaseNote1);
+        }
+      }
+    }
+
+    // Função para configurar o teclado MIDI para o instrumento 2
+    function setupMIDIInput2() {
+      var selectElement = document.getElementById('midi-inputs-2');
+      var selectedInputName = selectElement.value;
+
+      if (selectedInputName) {
+        input2 = WebMidi.getInputByName(selectedInputName);
+
+        if (input2) {
+          console.log('Teclado MIDI para o instrumento 2 selecionado:', selectedInputName);
+          log('Teclado MIDI para o instrumento 2 selecionado:'+ selectedInputName);
+          input2.addListener('noteon', 'all', playNote2);
+          input2.addListener('noteoff', 'all', releaseNote2);
+        }
+      }
+    }
+
+    const osciladoresInput1 = [];
+    function playNote1(event) {
+      var note = event.note;
+      var noteToPlay = Tone.Frequency(note.number, "midi").toNote();
+
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Criar um oscilador
+      const oscilador = audioContext.createOscillator();
+      oscilador.type = document.getElementById('osciladortype1').value;
+      oscilador.frequency.setValueAtTime(Tone.Frequency(noteToPlay).toFrequency(), audioContext.currentTime);
+
+      // Conectar o oscilador à saída de áudio
+      oscilador.connect(audioContext.destination);
+
+      // Iniciar o oscilador
+      oscilador.start();
+
+      osciladoresInput1.push(oscilador);
+      console.log('Nota MIDI para o instrumento 1 recebida:', note.number);
+      log('Nota MIDI para o instrumento 1 recebida:' + note.number);
+    }
+
+    // Função para liberar a nota no sintetizador do instrumento 1
+    function releaseNote1(event) {
+      var note = event.note;
+      var noteToPlay = Tone.Frequency(note.number, "midi").toNote();
+
+      const osciladorIndex = osciladoresInput1.findIndex((oscilador) => {
+        return oscilador.frequency.value.toFixed(4) == Tone.Frequency(noteToPlay).toFrequency().toFixed(4);
+      });
+
+      if (osciladorIndex !== -1) {
+        const oscilador = osciladoresInput1[osciladorIndex];
+        oscilador.stop();
+        oscilador.disconnect();
+        osciladoresInput1.splice(osciladorIndex, 1);
+      }
+    }
+
+// Função para reproduzir a nota no sintetizador do instrumento 2
+function playNote2(event) {
+  var note = event.note;
+      var noteToPlay = Tone.Frequency(note.number, "midi").toNote();
+
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Criar um oscilador
+      const oscilador = audioContext.createOscillator();
+      oscilador.type = document.getElementById('osciladortype2').value;
+      oscilador.frequency.setValueAtTime(Tone.Frequency(noteToPlay).toFrequency(), audioContext.currentTime);
+
+      // Criar um envelope ADSR
+      const envelope = audioContext.createGain();
+      envelope.gain.setValueAtTime(0, audioContext.currentTime);
+      envelope.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.001);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 1.2);
+
+      // Conectar o oscilador ao envelope e o envelope à saída de áudio
+      oscilador.connect(envelope);
+      envelope.connect(audioContext.destination);
+
+      // Iniciar o oscilador
+      oscilador.start();
+
+      osciladoresInput1.push(oscilador);
+      console.log('Nota MIDI para o instrumento 2 recebida:', note.number);
+      log('Nota MIDI para o instrumento 2 recebida:'+ note.number);
+}
+
+    // Função para liberar a nota no sintetizador do instrumento 2
+    function releaseNote2(event) {
+      var note = event.note;
+      var noteToPlay = Tone.Frequency(note.number, "midi").toNote();
+
+      const osciladorIndex = osciladoresInput1.findIndex((oscilador) => {
+        return oscilador.frequency.value.toFixed(4) == Tone.Frequency(noteToPlay).toFrequency().toFixed(4);
+      });
+
+      if (osciladorIndex !== -1) {
+        const oscilador = osciladoresInput1[osciladorIndex];
+        oscilador.stop();
+        oscilador.disconnect();
+        osciladoresInput1.splice(osciladorIndex, 1);
+      }
+    }
+
+    // Evento quando a escolha do teclado MIDI para o instrumento 1 é alterada
+    document.getElementById('midi-inputs-1').addEventListener('change', setupMIDIInput1);
+
+    // Evento quando a escolha do teclado MIDI para o instrumento 2 é alterada
+    document.getElementById('midi-inputs-2').addEventListener('change', setupMIDIInput2);
+
+    // Inicializa o WebMIDI.js e exibe os teclados MIDI disponíveis
+    WebMidi.enable(function(err) {
+      if (err) {
+        console.log('Erro ao inicializar o WebMIDI:', err);
+        log('Erro ao inicializar o WebMIDI:'+ err);
+      } else {
+        console.log('WebMIDI inicializado com sucesso!');
+        log('WebMIDI inicializado com sucesso!');
+        showMIDIInputs();
+
+        // Inicializa o contexto de áudio
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    });
+  </script>
+</body>
+</html>
