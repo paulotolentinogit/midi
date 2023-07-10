@@ -2,14 +2,14 @@ const audioList = [];
 const audio = {};
 
 function play(instrumento, tecla, nota, oitava) {
-  if (nota.indexOf('#') !== -1) {
-    nota = sharpToFlat(nota);
-  }
 
   acorde = nota.split(",");
   audio[instrumento] = audio[instrumento] || {};
   acorde.forEach(function(nota) {
     try{
+      if (nota.indexOf('#') !== -1) {
+        nota = sharpToFlat(nota);
+      }
       log(`Iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}, oitava ${oitava}`);
       audio[instrumento][tecla] = audio[instrumento][tecla] || {};
       audio[instrumento][tecla][`${nota}`] = new Audio(MIDI.Soundfont.accordion[nota + oitava]);
@@ -43,62 +43,62 @@ function stop(instrumento, tecla, nota) {
 function traduzBaixos(note){
 
   const mapeamentoBaixos = {
-    //D
-    "54" : "D",
-    "20" : "F#",
-    "23" : "A,F#,D",
-    "22" : "A,F,D",
-    "21" : "C,F#,D",
+    //F#
+    "54" : "F#",
+    "20" : "A#",
+    "23" : "C#,A#,F#",
+    "22" : "C#,A,F#",
+    "21" : "E,A#,F#",
 
     //G
-    "35" : "G",
-    "51" : "B",
-    "50" : "D,B,G",
-    "47" : "D,Bb,G",
-    "52" : "F,B,G",
+    "35" : "B",
+    "51" : "D#",
+    "50" : "F#,D#,B",
+    "47" : "F#,D,B",
+    "52" : "A,D#,B",
+
+    //E
+    "28" : "E",
+    "55" : "G#",
+    "48" : "B,G#,E",
+    "40" : "B,G,E",
+    "53" : "D,G#,E",
+    
+    //A
+    "33" : "A",
+    "49" : "C#",
+    "34" : "E,C#,A",
+    "45" : "E,C,A",
+    "46" : "G,C#,A",
+
+    //D
+    "26" : "D",
+    "54" : "F#",
+    "27" : "A,F#,D",
+    "38" : "A,F,D",
+    "39" : "C,F#,D",
+
+    //G
+    "31" : "G",
+    "35" : "B",
+    "32" : "D,B,G",
+    "43" : "D,Bb,G",
+    "44" : "F,B,G",
 
     //C
-    "28" : "C",
-    "55" : "E",
-    "48" : "G,E,C",
-    "40" : "G,Eb,C",
-    "53" : "Bb,E,C",
-    
+    "24" : "C",
+    "28" : "E",
+    "25" : "G,E,C",
+    "36" : "D,Eb,C",
+    "37" : "Bb,E,C",
+
+
     //F
-    "33" : "F",
-    "49" : "A",
-    "34" : "C,F,A",
-    "45" : "C,Ab,F",
-    "46" : "Eb,A,F",
-
-    //Bb
-    "26" : "Bb",
-    "54" : "D",
-    "27" : "F,D,Bb",
-    "38" : "F,Db,Bb",
-    "39" : "Ab,D,Bb",
-
-    //Eb
-    "31" : "Eb",
-    "35" : "G",
-    "32" : "Bb,G,Eb",
-    "43" : "Bb,Gb,Eb",
-    "44" : "Db,G,Eb",
-
-    //Ab
-    "24" : "Ab",
-    "28" : "C",
-    "25" : "Eb,C,Ab",
-    "36" : "Eb,B,Ab",
-    "37" : "Gb,C,Ab",
-
-
-    //Db
-    "29" : "Db",
-    "33" : "F",
-    "30" : "Ab,F,Db",
-    "41" : "Ab,E,Db",
-    "42" : "B,F,Db"
+    "29" : "F",
+    "33" : "A",
+    "30" : "C,A,F",
+    "41" : "C,Ab,F",
+    "42" : "Eb,A,F"
 
   };
   note.name = mapeamentoBaixos[note.number] || note.name;
