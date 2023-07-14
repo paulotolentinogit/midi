@@ -3,6 +3,13 @@ const audio = {};
 
 function play(instrumento, tecla, nota, oitava) {
 
+  if(instrumento == 2){
+    oitava = document.getElementById('oitavaBaixo').value;
+    tipoSom = document.getElementById('tipoSom2').value;
+  }else{
+    tipoSom = document.getElementById('tipoSom1').value;
+  }
+
   acorde = nota.split(",");
   audio[instrumento] = audio[instrumento] || {};
   acorde.forEach(function(nota) {
@@ -12,7 +19,8 @@ function play(instrumento, tecla, nota, oitava) {
       }
       log(`Iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}, oitava ${oitava}`);
       audio[instrumento][tecla] = audio[instrumento][tecla] || {};
-      audio[instrumento][tecla][`${nota}`] = new Audio(MIDI.Soundfont.accordion[nota + oitava]);
+      var intrumentoEfeito = criarObjetoPorTipo(tipoSom);
+      audio[instrumento][tecla][`${nota}`] = new Audio(intrumentoEfeito[nota + oitava]);
       audio[instrumento][tecla][`${nota}`].play();
     }catch(e){
       log(`Erro iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}`);
@@ -28,6 +36,7 @@ function stop(instrumento, tecla, nota) {
     if (nota.indexOf('#') !== -1) {
       nota = sharpToFlat(nota);
     }
+
     if (audio[instrumento] && audio[instrumento][tecla] && audio[instrumento][tecla][nota]) {
       try{
         player = audio[instrumento][tecla][`${nota}`];
@@ -115,4 +124,25 @@ function sharpToFlat(nota) {
     };
 
     return mapeamento[nota] || nota;
+  }
+
+  function criarObjetoPorTipo(tipo) {
+    var objeto = {
+      baritone_sax: MIDI.Soundfont.baritone_sax,
+      bassoon: MIDI.Soundfont.bassoon,
+      cello: MIDI.Soundfont.cello,
+      clarinet: MIDI.Soundfont.clarinet,
+      flute: MIDI.Soundfont.flute,
+      harmonica: MIDI.Soundfont.harmonica,
+      kalimba: MIDI.Soundfont.kalimba,
+      oboe: MIDI.Soundfont.oboe,
+      piccolo: MIDI.Soundfont.piccolo,
+      pizzicato_strings: MIDI.Soundfont.pizzicato_strings,
+      soprano_sax: MIDI.Soundfont.soprano_sax,
+      tenor_sax: MIDI.Soundfont.tenor_sax,
+      violin: MIDI.Soundfont.violin,
+      accordion: MIDI.Soundfont.accordion
+    };
+  
+    return objeto[tipo] || MIDI.Soundfont.accordion;
   }
