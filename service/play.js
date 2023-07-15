@@ -4,7 +4,7 @@ const audio = {};
 function play(instrumento, tecla, nota, oitava) {
 
   if(instrumento == 2){
-    oitava = document.getElementById('oitavaBaixo').value;
+    oitava = oitava + document.getElementById('oitavaBaixo').value;
     tipoSom = document.getElementById('tipoSom2').value;
   }else{
     tipoSom = document.getElementById('tipoSom1').value;

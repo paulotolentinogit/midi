@@ -80,7 +80,7 @@ function playNote2(event) {
 var note = event.note;
 
 note = traduzBaixos(note);
-note.octave = 2;
+
 play(2, note.number, note.name , note.octave);
 console.log('Nota MIDI para o instrumento 2 recebida:', note.number);
 log(`Nota MIDI para o instrumento 2 recebida: number-> ${note.number}, name-> ${note.name} , octave-> ${note.octave}`);
@@ -90,7 +90,6 @@ log(`Nota MIDI para o instrumento 2 recebida: number-> ${note.number}, name-> ${
   function releaseNote2(event) {
     var note = event.note;
     note = traduzBaixos(note);
-    note.octave = 2;
     stop(2, note.number, note.name);
     console.log('Nota MIDI para o instrumento 2 recebida:', note.number);
     // log(`ociladores: ${qtocilador} agora: ${osciladoresInput1.length}`);
