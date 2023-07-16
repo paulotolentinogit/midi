@@ -12,20 +12,17 @@
   <br>
   <h1>Escolha o Tipo som para o instrumento 1:</h1>
   <select id="tipoSom1">
-    <option value="baritone_sax">Baritone Sax</option>
-    <option value="bassoon" selected>Bassoon</option>
-    <option value="cello">Cello</option>
-    <option value="clarinet">Clarinet</option>
-    <option value="flute">Flute</option>
     <option value="harmonica">Harmonica</option>
-    <option value="kalimba">Kalimba</option>
+    <option value="accordion" selected >Accordion</option>
+    <option value="violin">Violin</option>
+    <option value="baritone_sax">Baritone Sax</option>
+    <option value="cello">Cello</option>
+    <option value="flute">flute</option>
+    <option value="clarinet">Clarinet</option>
     <option value="oboe">Oboe</option>
-    <option value="piccolo">Piccolo</option>
-    <option value="pizzicato_strings">Pizzicato Strings</option>
     <option value="soprano_sax">Soprano Sax</option>
     <option value="tenor_sax">Tenor Sax</option>
-    <option value="violin">Violin</option>
-    <option value="accordion">Accordion</option>
+    <option value="bassoon">Bassoon</option>
   </select>
  <br><br>
   <h1>Escolha o teclado MIDI para o instrumento 2:</h1>
@@ -35,28 +32,24 @@
   <br>
   <h1>Escolha o Tipo som para o instrumento 2:</h1>
   <select id="tipoSom2">
+    <option value="harmonica">Harmonica</option>
+    <option value="accordion" >Accordion</option>
+    <option value="violin">Violin</option>
     <option value="baritone_sax">Baritone Sax</option>
-    <option value="bassoon">Bassoon</option>
     <option value="cello">Cello</option>
     <option value="clarinet">Clarinet</option>
-    <option value="flute">Flute</option>
-    <option value="harmonica">Harmonica</option>
-    <option value="kalimba">Kalimba</option>
     <option value="oboe">Oboe</option>
-    <option value="piccolo">Piccolo</option>
-    <option value="pizzicato_strings">Pizzicato Strings</option>
     <option value="soprano_sax">Soprano Sax</option>
-    <option value="tenor_sax">Tenor Sax</option>
-    <option value="violin">Violin</option>
-    <option value="accordion" selected >Accordion</option>
+    <option value="tenor_sax" selected>Tenor Sax</option>
+    <option value="bassoon">Bassoon</option>
   </select>
   <br>
   <h1>Ajuste oitava instrumento 2:</h1>
   <select id="oitavaBaixo">
     <option value="0">Zero</option>
     <option value="1">Um</option>
-    <option value="2" selected>Dois</option>
-    <option value="3">Três</option>
+    <option value="2">Dois</option>
+    <option value="3" selected>Três</option>
     <option value="4">Quatro</option>
     <option value="5">Cinco</option>
     <option value="6">Seis</option>
@@ -66,8 +59,9 @@
 
   <h1>Log execução</h1>
   <textarea id="logtext" style="width: 638px; height: 150px;"></textarea>
-
+  
   <script type="text/javascript" src="infraestrutura/webmidi.min.js"></script>
+  <script type="text/javascript" src="infraestrutura/sf2-parser-all.js"></script>
 
   <script type="text/javascript" src="audio/accordion-mp3.js"></script>
   <script type="text/javascript" src="audio/baritone_sax-mp3.js"></script>
@@ -76,10 +70,7 @@
   <script type="text/javascript" src="audio/clarinet-mp3.js"></script>
   <script type="text/javascript" src="audio/flute-mp3.js"></script>
   <script type="text/javascript" src="audio/harmonica-mp3.js"></script>
-  <script type="text/javascript" src="audio/kalimba-mp3.js"></script>
   <script type="text/javascript" src="audio/oboe-mp3.js"></script>
-  <script type="text/javascript" src="audio/piccolo-mp3.js"></script>
-  <script type="text/javascript" src="audio/pizzicato_strings-mp3.js"></script>
   <script type="text/javascript" src="audio/soprano_sax-mp3.js"></script>
   <script type="text/javascript" src="audio/tenor_sax-mp3.js"></script>
   <script type="text/javascript" src="audio/violin-mp3.js"></script>

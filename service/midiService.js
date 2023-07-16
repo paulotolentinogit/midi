@@ -116,3 +116,31 @@ log(`Nota MIDI para o instrumento 2 recebida: number-> ${note.number}, name-> ${
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
   });
+
+// Utility function to load a SoundFont file from a URL using XMLHttpRequest.
+// The same origin policy will apply, as for all XHR requests.
+// function loadSoundFont(url, success, error) {
+//   var xhr = new XMLHttpRequest();
+//   xhr.open("GET", url, true);
+//   xhr.responseType = "arraybuffer";
+//   xhr.onreadystatechange = function () {
+//       if (xhr.readyState === 4) {
+//           if (xhr.status === 200) {
+//               success(new Uint8Array(xhr.response));
+//           } else {
+//               if (options.error) {
+//                   options.error(xhr.statusText);
+//               }
+//           }
+//       }
+//   };
+//   xhr.send();
+// }
+
+// // Load and parse a SoundFont file.
+// loadSoundFont("http://127.0.0.1:8080/CorvinoBaixoAcordeon.sf2", function (sfData) {
+//     var parser = new sf2.Parser(sfData);
+//     parser.parse();
+// //    var instrumente = new sf2.getInstruments();
+//     // Do something with the parsed SoundFont data.
+// });

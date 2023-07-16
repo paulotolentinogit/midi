@@ -3,13 +3,6 @@ const audio = {};
 
 function play(instrumento, tecla, nota, oitava) {
 
-  if(instrumento == 2){
-    oitava = oitava + document.getElementById('oitavaBaixo').value;
-    tipoSom = document.getElementById('tipoSom2').value;
-  }else{
-    tipoSom = document.getElementById('tipoSom1').value;
-  }
-
   acorde = nota.split(",");
   audio[instrumento] = audio[instrumento] || {};
   acorde.forEach(function(nota) {
@@ -17,6 +10,13 @@ function play(instrumento, tecla, nota, oitava) {
       if (nota.indexOf('#') !== -1) {
         nota = sharpToFlat(nota);
       }
+      if(instrumento == 2){
+        oitava = parseInt(document.getElementById('oitavaBaixo').value);
+        tipoSom = document.getElementById('tipoSom2').value;
+      }else{
+        tipoSom = document.getElementById('tipoSom1').value;
+      }
+      
       log(`Iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}, oitava ${oitava}`);
       audio[instrumento][tecla] = audio[instrumento][tecla] || {};
       var intrumentoEfeito = criarObjetoPorTipo(tipoSom);
