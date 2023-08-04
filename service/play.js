@@ -20,7 +20,11 @@ function play(instrumento, tecla, nota, oitava) {
       log(`Iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}, oitava ${oitava}`);
       audio[instrumento][tecla] = audio[instrumento][tecla] || {};
       var intrumentoEfeito = criarObjetoPorTipo(tipoSom);
-      audio[instrumento][tecla][`${nota}`] = new Audio(intrumentoEfeito[nota + oitava]);
+      if(tipoSom == "corvinoAcordeon"){
+        audio[instrumento][tecla][`${nota}`] = new Audio(intrumentoEfeito[tecla]);
+      }else{
+        audio[instrumento][tecla][`${nota}`] = new Audio(intrumentoEfeito[nota + oitava]);
+      }
       audio[instrumento][tecla][`${nota}`].play();
     }catch(e){
       log(`Erro iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}`);
@@ -128,6 +132,7 @@ function sharpToFlat(nota) {
 
   function criarObjetoPorTipo(tipo) {
     var objeto = {
+      corvinoAcordeon : MIDI.Soundfont.corvinoAcordeon,
       baritone_sax: MIDI.Soundfont.baritone_sax,
       bassoon: MIDI.Soundfont.bassoon,
       cello: MIDI.Soundfont.cello,

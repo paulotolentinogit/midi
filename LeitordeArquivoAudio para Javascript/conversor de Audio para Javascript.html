@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Reproduzir áudio MP3</title>
+</head>
+<body>
+  <input type="file" id="file-input" accept="audio/wav"><br><br>
+  <textarea id="codigo" style="width:80%; height:300px" ></textarea>
+  
+  <script>
+    function convertToBase64(file, callback) {
+      var reader = new FileReader();
+      reader.onloadend = function () {
+        callback(reader.result.split(',')[1]);
+      };
+      reader.readAsDataURL(file);
+    }
+  
+    function playAudioFromBase64(base64Data) {
+		var audioSource = "data:audio/wav;base64," + base64Data;
+		var codigo = document.getElementById("codigo");
+		codigo.value = "";
+		codigo.value = audioSource;
+		var audio = new Audio();
+		audio.src = audioSource;
+
+		audio.play();
+    }
+  
+    var fileInput = document.getElementById("file-input");
+    fileInput.addEventListener("change", function (event) {
+      var file = event.target.files[0];
+      convertToBase64(file, function (base64Data) {
+        playAudioFromBase64(base64Data);
+      });
+    });
+  </script>
+</body>
+</html>
