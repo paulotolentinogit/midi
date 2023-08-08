@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundFont Player</title>
+</head>
+<body>
+    <button id="playButton">Play SoundFont</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var playButton = document.getElementById('playButton');
+
+            playButton.addEventListener('click', function () {
+                var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                var soundFontUrl = 'GiuliettiAcordeon.sf2'; // Substitua pelo URL real do seu arquivo SoundFont
+                var noteNumber = 60; // Número MIDI da nota que você deseja tocar (60 é o Dó Central)
+
+                fetch(soundFontUrl)
+                    .then(response => response.arrayBuffer())
+                    .then(sf2ArrayBuffer => audioContext.decodeAudioData(sf2ArrayBuffer))
+                    .then(sf2Buffer => {
+                        var source = audioContext.createBufferSource();
+                        source.buffer = sf2Buffer;
+                        source.connect(audioContext.destination);
+                        source.start();
+                    })
+                    .catch(error => {
+                        console.error('Error loading or playing SoundFont:', error);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
