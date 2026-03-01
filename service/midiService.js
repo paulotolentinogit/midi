@@ -1,121 +1,176 @@
-function log(texto){
-    document.getElementById('logtext').value = texto + "\n" + document.getElementById('logtext').value; 
-  }
-  var input1; // Variável para armazenar o teclado MIDI para o instrumento 1
-  var input2; // Variável para armazenar o teclado MIDI para o instrumento 2
-  var audioContext; // Objeto para o contexto de áudio
+const LOG_MAX_LINES = 200;
+const LOG_FLUSH_INTERVAL_MS = 50;
+const logQueue = [];
+let logFlushTimeout = null;
 
-  // Função para exibir os teclados MIDI disponíveis
-  function showMIDIInputs() {
-    var midiInputs = WebMidi.inputs;
-    var selectElement1 = document.getElementById('midi-inputs-1');
-    var selectElement2 = document.getElementById('midi-inputs-2');
+const logTextArea = document.getElementById('logtext');
+const tipoSom1Element = document.getElementById('tipoSom1');
+const tipoSom2Element = document.getElementById('tipoSom2');
+const oitavaBaixoElement = document.getElementById('oitavaBaixo');
 
-    midiInputs.forEach(function(input) {
-      var optionElement1 = document.createElement('option');
-      var optionElement2 = document.createElement('option');
-      optionElement1.value = input.name;
-      optionElement1.text = input.name;
-      optionElement2.value = input.name;
-      optionElement2.text = input.name;
-      selectElement1.appendChild(optionElement1);
-      selectElement2.appendChild(optionElement2);
-    });
+let input1; // Variável para armazenar o teclado MIDI para o instrumento 1
+let input2; // Variável para armazenar o teclado MIDI para o instrumento 2
+let audioContext; // Objeto para o contexto de áudio
+
+function flushLogQueue() {
+  if (!logTextArea || logQueue.length === 0) {
+    logFlushTimeout = null;
+    return;
   }
 
-  // Função para configurar o teclado MIDI para o instrumento 1
-  function setupMIDIInput1() {
-    var selectElement = document.getElementById('midi-inputs-1');
-    var selectedInputName = selectElement.value;
+  const novosLogs = logQueue.splice(0, logQueue.length);
+  const logsAtuais = logTextArea.value ? logTextArea.value.split('\n').filter(Boolean) : [];
+  const merged = [...novosLogs.reverse(), ...logsAtuais].slice(0, LOG_MAX_LINES);
 
-    if (selectedInputName) {
-      input1 = WebMidi.getInputByName(selectedInputName);
+  logTextArea.value = merged.join('\n');
+  logFlushTimeout = null;
+}
 
-      if (input1) {
-        console.log('Teclado MIDI para o instrumento 1 selecionado:', selectedInputName);
-        log('Teclado MIDI para o instrumento 1 selecionado:'+ selectedInputName);
-        input1.addListener('noteon', 'all', playNote1);
-        input1.addListener('noteoff', 'all', releaseNote1);
-      }
+function log(texto) {
+  logQueue.push(texto);
+
+  if (logFlushTimeout) return;
+
+  logFlushTimeout = setTimeout(flushLogQueue, LOG_FLUSH_INTERVAL_MS);
+}
+
+function atualizarConfiguracaoPlaybackPelaUI() {
+  if (typeof atualizarConfigPlayback !== 'function') return;
+
+  atualizarConfigPlayback({
+    instrumento1: {
+      tipoSom: tipoSom1Element.value
+    },
+    instrumento2: {
+      tipoSom: tipoSom2Element.value,
+      oitava: parseInt(oitavaBaixoElement.value, 10)
+    }
+  });
+}
+
+function detachInputListeners(input, noteOnHandler, noteOffHandler) {
+  if (!input) return;
+
+  try {
+    input.removeListener('noteon', 'all', noteOnHandler);
+    input.removeListener('noteoff', 'all', noteOffHandler);
+  } catch (_e) {
+    // ignora erros de remoção de listener para manter compatibilidade
+  }
+}
+
+// Função para exibir os teclados MIDI disponíveis
+function showMIDIInputs() {
+  const midiInputs = WebMidi.inputs;
+  const selectElement1 = document.getElementById('midi-inputs-1');
+  const selectElement2 = document.getElementById('midi-inputs-2');
+
+  midiInputs.forEach(function(input) {
+    const optionElement1 = document.createElement('option');
+    const optionElement2 = document.createElement('option');
+    optionElement1.value = input.name;
+    optionElement1.text = input.name;
+    optionElement2.value = input.name;
+    optionElement2.text = input.name;
+    selectElement1.appendChild(optionElement1);
+    selectElement2.appendChild(optionElement2);
+  });
+}
+
+// Função para configurar o teclado MIDI para o instrumento 1
+function setupMIDIInput1() {
+  const selectElement = document.getElementById('midi-inputs-1');
+  const selectedInputName = selectElement.value;
+
+  detachInputListeners(input1, playNote1, releaseNote1);
+
+  if (selectedInputName) {
+    input1 = WebMidi.getInputByName(selectedInputName);
+
+    if (input1) {
+      console.log('Teclado MIDI para o instrumento 1 selecionado:', selectedInputName);
+      log('Teclado MIDI para o instrumento 1 selecionado:' + selectedInputName);
+      input1.addListener('noteon', 'all', playNote1);
+      input1.addListener('noteoff', 'all', releaseNote1);
     }
   }
+}
 
-  // Função para configurar o teclado MIDI para o instrumento 2
-  function setupMIDIInput2() {
-    var selectElement = document.getElementById('midi-inputs-2');
-    var selectedInputName = selectElement.value;
+// Função para configurar o teclado MIDI para o instrumento 2
+function setupMIDIInput2() {
+  const selectElement = document.getElementById('midi-inputs-2');
+  const selectedInputName = selectElement.value;
 
-    if (selectedInputName) {
-      input2 = WebMidi.getInputByName(selectedInputName);
+  detachInputListeners(input2, playNote2, releaseNote2);
 
-      if (input2) {
-        console.log('Teclado MIDI para o instrumento 2 selecionado:', selectedInputName);
-        log('Teclado MIDI para o instrumento 2 selecionado:'+ selectedInputName);
-        input2.addListener('noteon', 'all', playNote2);
-        input2.addListener('noteoff', 'all', releaseNote2);
-      }
+  if (selectedInputName) {
+    input2 = WebMidi.getInputByName(selectedInputName);
+
+    if (input2) {
+      console.log('Teclado MIDI para o instrumento 2 selecionado:', selectedInputName);
+      log('Teclado MIDI para o instrumento 2 selecionado:' + selectedInputName);
+      input2.addListener('noteon', 'all', playNote2);
+      input2.addListener('noteoff', 'all', releaseNote2);
     }
   }
+}
 
-  const osciladoresInput1 = [];
-  function playNote1(event) {
-    var note = event.note;
+function playNote1(event) {
+  const note = event.note;
 
-    play(1, note.number, note.name , note.octave);
-    console.log('Nota MIDI para o instrumento 1 recebida:', note.number);
-    log(`Nota MIDI para o instrumento 1 recebida: number-> ${note.number}, name-> ${note.name} , octave-> ${note.octave}`);
-  }
+  play(1, note.number, note.name, note.octave);
+  console.log('Nota MIDI para o instrumento 1 recebida:', note.number);
+  log(`Nota MIDI para o instrumento 1 recebida: number-> ${note.number}, name-> ${note.name} , octave-> ${note.octave}`);
+}
 
-  // Função para liberar a nota no sintetizador do instrumento 1
-  function releaseNote1(event) {
-    var note = event.note;
-    stop(1, note.number, note.name);
-    console.log('Nota MIDI para o instrumento 1 recebida:', note.number);
-    // log(`ociladores: ${qtocilador} agora: ${osciladoresInput1.length}`);
-
-  }
+// Função para liberar a nota no sintetizador do instrumento 1
+function releaseNote1(event) {
+  const note = event.note;
+  stop(1, note.number, note.name);
+  console.log('Nota MIDI para o instrumento 1 recebida:', note.number);
+}
 
 // Função para reproduzir a nota no sintetizador do instrumento 2
 function playNote2(event) {
-var note = event.note;
+  let note = event.note;
 
-note = traduzBaixos(note);
+  note = traduzBaixos(note);
 
-play(2, note.number, note.name , note.octave);
-console.log('Nota MIDI para o instrumento 2 recebida:', note.number);
-log(`Nota MIDI para o instrumento 2 recebida: number-> ${note.number}, name-> ${note.name} , octave-> ${note.octave}`);
+  play(2, note.number, note.name, note.octave);
+  console.log('Nota MIDI para o instrumento 2 recebida:', note.number);
+  log(`Nota MIDI para o instrumento 2 recebida: number-> ${note.number}, name-> ${note.name} , octave-> ${note.octave}`);
 }
 
-  // Função para liberar a nota no sintetizador do instrumento 2
-  function releaseNote2(event) {
-    var note = event.note;
-    note = traduzBaixos(note);
-    stop(2, note.number, note.name);
-    console.log('Nota MIDI para o instrumento 2 recebida:', note.number);
-    // log(`ociladores: ${qtocilador} agora: ${osciladoresInput1.length}`);
+// Função para liberar a nota no sintetizador do instrumento 2
+function releaseNote2(event) {
+  let note = event.note;
+  note = traduzBaixos(note);
+  stop(2, note.number, note.name);
+  console.log('Nota MIDI para o instrumento 2 recebida:', note.number);
+}
 
+// Eventos de configuração de UI
+document.getElementById('midi-inputs-1').addEventListener('change', setupMIDIInput1);
+document.getElementById('midi-inputs-2').addEventListener('change', setupMIDIInput2);
+tipoSom1Element.addEventListener('change', atualizarConfiguracaoPlaybackPelaUI);
+tipoSom2Element.addEventListener('change', atualizarConfiguracaoPlaybackPelaUI);
+oitavaBaixoElement.addEventListener('change', atualizarConfiguracaoPlaybackPelaUI);
+
+// Inicializa o WebMIDI.js e exibe os teclados MIDI disponíveis
+WebMidi.enable(function(err) {
+  if (err) {
+    console.log('Erro ao inicializar o WebMIDI:', err);
+    log('Erro ao inicializar o WebMIDI:' + err);
+  } else {
+    console.log('WebMIDI inicializado com sucesso!');
+    log('WebMIDI inicializado com sucesso!');
+    showMIDIInputs();
+    atualizarConfiguracaoPlaybackPelaUI();
+
+    // Inicializa o contexto de áudio
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
-
-  // Evento quando a escolha do teclado MIDI para o instrumento 1 é alterada
-  document.getElementById('midi-inputs-1').addEventListener('change', setupMIDIInput1);
-
-  // Evento quando a escolha do teclado MIDI para o instrumento 2 é alterada
-  document.getElementById('midi-inputs-2').addEventListener('change', setupMIDIInput2);
-
-  // Inicializa o WebMIDI.js e exibe os teclados MIDI disponíveis
-  WebMidi.enable(function(err) {
-    if (err) {
-      console.log('Erro ao inicializar o WebMIDI:', err);
-      log('Erro ao inicializar o WebMIDI:'+ err);
-    } else {
-      console.log('WebMIDI inicializado com sucesso!');
-      log('WebMIDI inicializado com sucesso!');
-      showMIDIInputs();
-
-      // Inicializa o contexto de áudio
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-  });
+});
 
 // Utility function to load a SoundFont file from a URL using XMLHttpRequest.
 // The same origin policy will apply, as for all XHR requests.

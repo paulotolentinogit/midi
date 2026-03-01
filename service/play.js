@@ -1,33 +1,90 @@
-const audioList = [];
 const audio = {};
+const audioSampleCache = {};
+
+const playbackConfig = {
+  instrumento1: {
+    tipoSom: 'accordion'
+  },
+  instrumento2: {
+    tipoSom: 'corvinoAcordeon',
+    oitava: 3
+  }
+};
+
+function atualizarConfigPlayback(config) {
+  if (!config) return;
+
+  if (config.instrumento1 && config.instrumento1.tipoSom) {
+    playbackConfig.instrumento1.tipoSom = config.instrumento1.tipoSom;
+  }
+
+  if (config.instrumento2) {
+    if (config.instrumento2.tipoSom) {
+      playbackConfig.instrumento2.tipoSom = config.instrumento2.tipoSom;
+    }
+    if (Number.isInteger(config.instrumento2.oitava)) {
+      playbackConfig.instrumento2.oitava = config.instrumento2.oitava;
+    }
+  }
+}
+
+function resolverConfiguracaoInstrumento(instrumento) {
+  if (instrumento === 2) {
+    return {
+      tipoSom: playbackConfig.instrumento2.tipoSom,
+      oitava: playbackConfig.instrumento2.oitava
+    };
+  }
+
+  return {
+    tipoSom: playbackConfig.instrumento1.tipoSom,
+    oitava: null
+  };
+}
+
+function obterAudioCacheado(src, cacheKey) {
+  if (!audioSampleCache[cacheKey]) {
+    audioSampleCache[cacheKey] = new Audio(src);
+    audioSampleCache[cacheKey].preload = 'auto';
+  }
+
+  return audioSampleCache[cacheKey].cloneNode();
+}
 
 function play(instrumento, tecla, nota, oitava) {
 
-  acorde = nota.split(",");
+  const acorde = nota.split(",");
   audio[instrumento] = audio[instrumento] || {};
-  acorde.forEach(function(nota) {
-    try{
-      if (nota.indexOf('#') !== -1) {
-        nota = sharpToFlat(nota);
+  acorde.forEach(function(notaAtual) {
+    try {
+      let notaNormalizada = notaAtual;
+      if (notaNormalizada.indexOf('#') !== -1) {
+        notaNormalizada = sharpToFlat(notaNormalizada);
       }
-      if(instrumento == 2){
-        oitava = parseInt(document.getElementById('oitavaBaixo').value);
-        tipoSom = document.getElementById('tipoSom2').value;
-      }else{
-        tipoSom = document.getElementById('tipoSom1').value;
-      }
-      
-      log(`Iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}, oitava ${oitava}`);
+
+      const configuracao = resolverConfiguracaoInstrumento(instrumento);
+      const oitavaFinal = instrumento === 2 ? configuracao.oitava : oitava;
+      const tipoSom = configuracao.tipoSom;
+
+      log(`Iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${notaNormalizada}, oitava ${oitavaFinal}`);
       audio[instrumento][tecla] = audio[instrumento][tecla] || {};
-      var intrumentoEfeito = criarObjetoPorTipo(tipoSom);
-      if(tipoSom == "corvinoAcordeon"){
-        audio[instrumento][tecla][`${nota}`] = new Audio(intrumentoEfeito[tecla]);
-      }else{
-        audio[instrumento][tecla][`${nota}`] = new Audio(intrumentoEfeito[nota + oitava]);
+
+      const instrumentoEfeito = criarObjetoPorTipo(tipoSom);
+      const sampleSrc = tipoSom === "corvinoAcordeon"
+        ? instrumentoEfeito[tecla]
+        : instrumentoEfeito[notaNormalizada + oitavaFinal];
+
+      if (!sampleSrc) {
+        log(`Sample não encontrado para tipoSom: ${tipoSom}, nota: ${notaNormalizada}, oitava: ${oitavaFinal}`);
+        return;
       }
-      audio[instrumento][tecla][`${nota}`].play();
-    }catch(e){
-      log(`Erro iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}`);
+
+      const cacheKey = `${tipoSom}|${sampleSrc}`;
+      audio[instrumento][tecla][`${notaNormalizada}`] = obterAudioCacheado(sampleSrc, cacheKey);
+      audio[instrumento][tecla][`${notaNormalizada}`].currentTime = 0;
+      audio[instrumento][tecla][`${notaNormalizada}`].play();
+    } catch (e) {
+      log(`Erro iniciando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${notaAtual}. Erro: ${e?.message || e}`);
     }
   });
 }
@@ -35,20 +92,21 @@ function play(instrumento, tecla, nota, oitava) {
 
 function stop(instrumento, tecla, nota) {
 
-  acorde = nota.split(",");
-  acorde.forEach(function(nota) {
-    if (nota.indexOf('#') !== -1) {
-      nota = sharpToFlat(nota);
+  const acorde = nota.split(",");
+  acorde.forEach(function(notaAtual) {
+    let notaNormalizada = notaAtual;
+    if (notaNormalizada.indexOf('#') !== -1) {
+      notaNormalizada = sharpToFlat(notaNormalizada);
     }
 
-    if (audio[instrumento] && audio[instrumento][tecla] && audio[instrumento][tecla][nota]) {
-      try{
-        player = audio[instrumento][tecla][`${nota}`];
+    if (audio[instrumento] && audio[instrumento][tecla] && audio[instrumento][tecla][notaNormalizada]) {
+      try {
+        const player = audio[instrumento][tecla][`${notaNormalizada}`];
         player.pause();
         player.currentTime = 0;
-        log(`Parando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}`);
-      }catch(e){
-        log(`Erro parando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${nota}`);
+        log(`Parando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${notaNormalizada}`);
+      } catch (e) {
+        log(`Erro parando a nota instrumento: ${instrumento}, tecla: ${tecla}, nota: ${notaNormalizada}. Erro: ${e?.message || e}`);
       }
     }
   });
@@ -56,59 +114,55 @@ function stop(instrumento, tecla, nota) {
 function traduzBaixos(note){
 
   const mapeamentoBaixos = {
-    //F#
+    // F#
     "54" : "F#",
     "20" : "A#",
     "23" : "C#,A#,F#",
     "22" : "C#,A,F#",
     "21" : "E,A#,F#",
 
-    //G
+    // B
     "35" : "B",
     "51" : "D#",
     "50" : "F#,D#,B",
     "47" : "F#,D,B",
     "52" : "A,D#,B",
 
-    //E
+    // E
     "28" : "E",
     "55" : "G#",
     "48" : "B,G#,E",
     "40" : "B,G,E",
     "53" : "D,G#,E",
     
-    //A
+    // A
     "33" : "A",
     "49" : "C#",
     "34" : "E,C#,A",
     "45" : "E,C,A",
     "46" : "G,C#,A",
 
-    //D
+    // D
     "26" : "D",
-    "54" : "F#",
     "27" : "A,F#,D",
     "38" : "A,F,D",
     "39" : "C,F#,D",
 
-    //G
+    // G
     "31" : "G",
-    "35" : "B",
     "32" : "D,B,G",
     "43" : "D,Bb,G",
     "44" : "F,B,G",
 
-    //C
+    // C
     "24" : "C",
-    "28" : "E",
     "25" : "G,E,C",
     "36" : "D,Eb,C",
     "37" : "Bb,E,C",
 
 
-    //F
+    // F
     "29" : "F",
-    "33" : "A",
     "30" : "C,A,F",
     "41" : "C,Ab,F",
     "42" : "Eb,A,F"
