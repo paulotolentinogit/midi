@@ -1,13 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>Reproduzir áudio MP3</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversor de áudio WAV para Base64</title>
+  <style>
+    :root {
+      --blue-900: #0f3f95;
+      --blue-700: #2569dd;
+      --blue-100: #ecf3ff;
+      --text: #122b57;
+      --card: #ffffff;
+      --border: #cfdfff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(135deg, #f4f8ff, #ffffff);
+      color: var(--text);
+      padding: 24px;
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      width: min(920px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: 0 10px 28px rgba(16, 60, 138, 0.14);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(120deg, var(--blue-900), var(--blue-700));
+      color: #fff;
+      padding: 22px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    }
+
+    header p {
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    .content {
+      padding: 22px;
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    input[type="file"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 320px;
+      resize: vertical;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.88rem;
+    }
+
+    .status {
+      background: var(--blue-100);
+      border-left: 4px solid var(--blue-700);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 0;
+    }
+  </style>
 </head>
 <body>
-  <input type="file" id="file-input" accept="audio/wav"><br><br>
-  <textarea id="codigo" style="width:80%; height:300px" ></textarea>
-  
+  <main>
+    <header>
+      <h1>Conversor WAV para Base64</h1>
+      <p>Selecione um arquivo <strong>.wav</strong>, reproduza o áudio e visualize o Data URL gerado.</p>
+    </header>
+
+    <section class="content" aria-label="Conversão de áudio">
+      <label for="file-input">Arquivo de áudio (WAV)</label>
+      <input type="file" id="file-input" accept="audio/wav">
+
+      <p id="status" class="status">Status: aguardando arquivo.</p>
+
+      <label for="codigo">Resultado em Base64/Data URL</label>
+      <textarea id="codigo" aria-label="Resultado em Base64"></textarea>
+    </section>
+  </main>
+
   <script>
+    var fileInput = document.getElementById('file-input');
+    var codigo = document.getElementById('codigo');
+    var statusElement = document.getElementById('status');
+
+    function setStatus(message) {
+      statusElement.textContent = 'Status: ' + message;
+    }
+
     function convertToBase64(file, callback) {
       var reader = new FileReader();
       reader.onloadend = function () {
@@ -15,23 +123,28 @@
       };
       reader.readAsDataURL(file);
     }
-  
-    function playAudioFromBase64(base64Data) {
-		var audioSource = "data:audio/wav;base64," + base64Data;
-		var codigo = document.getElementById("codigo");
-		codigo.value = "";
-		codigo.value = audioSource;
-		var audio = new Audio();
-		audio.src = audioSource;
 
-		audio.play();
+    function playAudioFromBase64(base64Data) {
+      var audioSource = 'data:audio/wav;base64,' + base64Data;
+      codigo.value = audioSource;
+
+      var audio = new Audio();
+      audio.src = audioSource;
+      audio.play();
     }
-  
-    var fileInput = document.getElementById("file-input");
-    fileInput.addEventListener("change", function (event) {
+
+    fileInput.addEventListener('change', function (event) {
       var file = event.target.files[0];
+      if (!file) {
+        setStatus('nenhum arquivo selecionado.');
+        return;
+      }
+
+      setStatus('convertendo e reproduzindo: ' + file.name);
+
       convertToBase64(file, function (base64Data) {
         playAudioFromBase64(base64Data);
+        setStatus('conversão concluída com sucesso.');
       });
     });
   </script>

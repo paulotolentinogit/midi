@@ -1,33 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoundFont Player</title>
+    <style>
+        :root {
+            --blue-900: #0b3d91;
+            --blue-700: #1d5fd0;
+            --blue-100: #e8f1ff;
+            --white: #ffffff;
+            --text-primary: #0f2a55;
+            --shadow: 0 10px 30px rgba(11, 61, 145, 0.16);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--blue-100) 0%, var(--white) 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        main {
+            width: 100%;
+            max-width: 520px;
+            background-color: var(--white);
+            border: 1px solid #d8e7ff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(120deg, var(--blue-900), var(--blue-700));
+            color: var(--white);
+            padding: 28px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: clamp(1.5rem, 2.8vw, 2rem);
+        }
+
+        .header p {
+            margin: 8px 0 0;
+            opacity: 0.95;
+            line-height: 1.4;
+        }
+
+        .content {
+            padding: 24px 28px 28px;
+        }
+
+        .status {
+            margin: 0 0 18px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background-color: var(--blue-100);
+            border-left: 4px solid var(--blue-700);
+            font-size: 0.96rem;
+            line-height: 1.4;
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 18px;
+            background: var(--blue-700);
+            color: var(--white);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            box-shadow: 0 8px 20px rgba(29, 95, 208, 0.28);
+        }
+
+        button:hover {
+            background: var(--blue-900);
+            transform: translateY(-1px);
+        }
+
+        button:focus-visible {
+            outline: 3px solid #7ca9ff;
+            outline-offset: 2px;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .footer-note {
+            margin-top: 14px;
+            font-size: 0.86rem;
+            color: #5b77a8;
+            text-align: center;
+        }
+
+        @media (max-width: 520px) {
+            .header,
+            .content {
+                padding-inline: 18px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <button id="playButton">Play SoundFont</button>
+    <main>
+        <header class="header">
+            <h1>SoundFont Player</h1>
+            <p>Toque seu arquivo SoundFont com uma interface limpa, moderna e responsiva.</p>
+        </header>
+
+        <section class="content" aria-label="Controles de reprodução">
+            <p id="status" class="status" role="status" aria-live="polite">Pronto para reprodução.</p>
+            <button id="playButton" type="button">▶ Reproduzir SoundFont</button>
+            <p class="footer-note">Tema visual em azul e branco com foco em legibilidade.</p>
+        </section>
+    </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var playButton = document.getElementById('playButton');
+            var statusElement = document.getElementById('status');
+            var audioContext;
+
+            function getAudioContext() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                return audioContext;
+            }
 
             playButton.addEventListener('click', function () {
-                var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                var soundFontUrl = 'GiuliettiAcordeon.sf2'; // Substitua pelo URL real do seu arquivo SoundFont
-                var noteNumber = 60; // Número MIDI da nota que você deseja tocar (60 é o Dó Central)
+                var context = getAudioContext();
+                var soundFontUrl = 'GiuliettiAcordeon.sf2';
+
+                statusElement.textContent = 'Carregando SoundFont...';
+                playButton.disabled = true;
 
                 fetch(soundFontUrl)
                     .then(response => response.arrayBuffer())
-                    .then(sf2ArrayBuffer => audioContext.decodeAudioData(sf2ArrayBuffer))
+                    .then(sf2ArrayBuffer => context.decodeAudioData(sf2ArrayBuffer))
                     .then(sf2Buffer => {
-                        var source = audioContext.createBufferSource();
+                        var source = context.createBufferSource();
                         source.buffer = sf2Buffer;
-                        source.connect(audioContext.destination);
+                        source.connect(context.destination);
                         source.start();
+                        statusElement.textContent = 'Reprodução iniciada com sucesso!';
                     })
                     .catch(error => {
+                        statusElement.textContent = 'Erro ao carregar ou reproduzir o SoundFont.';
                         console.error('Error loading or playing SoundFont:', error);
+                    })
+                    .finally(function () {
+                        playButton.disabled = false;
                     });
             });
         });

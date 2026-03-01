@@ -1,29 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Piano com seleção de teclado MIDI</title>
+  <style>
+    :root {
+      --bg: #f3f8ff;
+      --card: #ffffff;
+      --primary: #1c5ed6;
+      --primary-dark: #0e3f9c;
+      --text: #102a54;
+      --border: #cfe0ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(140deg, var(--bg), #fff);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(700px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(15, 58, 133, 0.14);
+      padding: 22px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: #4f6d9f;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.96rem;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .status {
+      margin-top: 16px;
+      background: #e8f1ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+    }
+
+    code { color: var(--primary-dark); }
+  </style>
 </head>
 <body>
-  <h1>Escolha o teclado MIDI para o instrumento 1:</h1>
-  <select id="midi-inputs-1">
-    <option disabled selected>Selecione um teclado MIDI</option>
-  </select>
+  <main>
+    <h1>Piano MIDI (2 instrumentos)</h1>
+    <p class="subtitle">Selecione um teclado MIDI para cada instrumento e toque para ouvir o sintetizador.</p>
 
-  <h1>Escolha o teclado MIDI para o instrumento 2:</h1>
-  <select id="midi-inputs-2">
-    <option disabled selected>Selecione um teclado MIDI</option>
-  </select>
+    <div class="grid">
+      <div class="field">
+        <label for="midi-inputs-1">Teclado MIDI - Instrumento 1</label>
+        <select id="midi-inputs-1">
+          <option disabled selected>Selecione um teclado MIDI</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="midi-inputs-2">Teclado MIDI - Instrumento 2</label>
+        <select id="midi-inputs-2">
+          <option disabled selected>Selecione um teclado MIDI</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="status" id="status">Status: aguardando inicialização do <code>WebMidi</code>.</p>
+  </main>
 
   <script src="https://unpkg.com/webmidi@2.5.0/webmidi.min.js"></script>
   <script src="https://unpkg.com/tone/build/Tone.js"></script>
   <script>
-    var input1; // Variável para armazenar o teclado MIDI para o instrumento 1
-    var input2; // Variável para armazenar o teclado MIDI para o instrumento 2
-    var audioContext; // Objeto para o contexto de áudio
-    var currentOscillator1; // Oscilador atual para o instrumento 1
-    var currentOscillator2; // Oscilador atual para o instrumento 2
+    var input1;
+    var input2;
+    var audioContext;
+    var currentOscillator1;
+    var currentOscillator2;
+    var statusElement = document.getElementById('status');
 
-    // Função para exibir os teclados MIDI disponíveis
+    function setStatus(message) {
+      statusElement.textContent = 'Status: ' + message;
+    }
+
     function showMIDIInputs() {
       var midiInputs = WebMidi.inputs;
       var selectElement1 = document.getElementById('midi-inputs-1');
@@ -41,69 +138,58 @@
       });
     }
 
-    // Função para configurar o teclado MIDI para o instrumento 1
     function setupMIDIInput1() {
-      var selectElement = document.getElementById('midi-inputs-1');
-      var selectedInputName = selectElement.value;
+      var selectedInputName = document.getElementById('midi-inputs-1').value;
+      if (!selectedInputName) return;
 
-      if (selectedInputName) {
-        input1 = WebMidi.getInputByName(selectedInputName);
+      if (input1) {
+        input1.removeListener('noteon', 'all', playNote1);
+        input1.removeListener('noteoff', 'all', releaseNote1);
+      }
 
-        if (input1) {
-          console.log('Teclado MIDI para o instrumento 1 selecionado:', selectedInputName);
-          input1.addListener('noteon', 'all', playNote1);
-          input1.addListener('noteoff', 'all', releaseNote1);
-        }
+      input1 = WebMidi.getInputByName(selectedInputName);
+      if (input1) {
+        input1.addListener('noteon', 'all', playNote1);
+        input1.addListener('noteoff', 'all', releaseNote1);
+        setStatus('Teclado do instrumento 1: ' + selectedInputName);
       }
     }
 
-    // Função para configurar o teclado MIDI para o instrumento 2
     function setupMIDIInput2() {
-      var selectElement = document.getElementById('midi-inputs-2');
-      var selectedInputName = selectElement.value;
+      var selectedInputName = document.getElementById('midi-inputs-2').value;
+      if (!selectedInputName) return;
 
-      if (selectedInputName) {
-        input2 = WebMidi.getInputByName(selectedInputName);
+      if (input2) {
+        input2.removeListener('noteon', 'all', playNote2);
+        input2.removeListener('noteoff', 'all', releaseNote2);
+      }
 
-        if (input2) {
-          console.log('Teclado MIDI para o instrumento 2 selecionado:', selectedInputName);
-          input2.addListener('noteon', 'all', playNote2);
-          input2.addListener('noteoff', 'all', releaseNote2);
-        }
+      input2 = WebMidi.getInputByName(selectedInputName);
+      if (input2) {
+        input2.addListener('noteon', 'all', playNote2);
+        input2.addListener('noteoff', 'all', releaseNote2);
+        setStatus('Teclado do instrumento 2: ' + selectedInputName);
       }
     }
 
-    // Função para reproduzir a nota no sintetizador do instrumento 1
     function playNote1(event) {
       var note = event.note.number;
-
-      // Converter o número da nota MIDI para a frequência correspondente
       var frequency = 440 * Math.pow(2, (note - 69) / 12);
 
-      // Liberar o oscilador anterior, se houver
       releaseNote1();
-
-      // Criar um novo oscilador para o instrumento 1
       currentOscillator1 = audioContext.createOscillator();
       currentOscillator1.type = 'triangle';
       currentOscillator1.frequency.setValueAtTime(frequency, audioContext.currentTime);
       currentOscillator1.connect(audioContext.destination);
       currentOscillator1.start();
       console.log('Nota MIDI para o instrumento 1 recebida:', note);
-      console.log(`event :${event.note}`)
     }
 
-    // Função para reproduzir a nota no sintetizador do instrumento 2
     function playNote2(event) {
       var note = event.note.number;
-
-      // Converter o número da nota MIDI para a frequência correspondente
       var frequency = 440 * Math.pow(2, (note - 69) / 12);
 
-      // Liberar o oscilador anterior, se houver
       releaseNote2();
-
-      // Criar um novo oscilador para o instrumento 2
       currentOscillator2 = audioContext.createOscillator();
       currentOscillator2.type = 'triangle';
       currentOscillator2.frequency.setValueAtTime(frequency, audioContext.currentTime);
@@ -112,7 +198,6 @@
       console.log('Nota MIDI para o instrumento 2 recebida:', note);
     }
 
-    // Função para liberar a nota no sintetizador do instrumento 1
     function releaseNote1() {
       if (currentOscillator1) {
         currentOscillator1.stop();
@@ -121,7 +206,6 @@
       }
     }
 
-    // Função para liberar a nota no sintetizador do instrumento 2
     function releaseNote2() {
       if (currentOscillator2) {
         currentOscillator2.stop();
@@ -130,22 +214,18 @@
       }
     }
 
-    // Evento quando a escolha do teclado MIDI para o instrumento 1 é alterada
     document.getElementById('midi-inputs-1').addEventListener('change', setupMIDIInput1);
-
-    // Evento quando a escolha do teclado MIDI para o instrumento 2 é alterada
     document.getElementById('midi-inputs-2').addEventListener('change', setupMIDIInput2);
 
-    // Inicializa o WebMIDI.js e exibe os teclados MIDI disponíveis
     WebMidi.enable(function(err) {
       if (err) {
         console.log('Erro ao inicializar o WebMIDI:', err);
+        setStatus('Erro ao inicializar WebMIDI. Verifique permissões/dispositivo.');
       } else {
         console.log('WebMIDI inicializado com sucesso!');
         showMIDIInputs();
-
-        // Inicializa o contexto de áudio
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        setStatus('WebMIDI inicializado com sucesso.');
       }
     });
   </script>
